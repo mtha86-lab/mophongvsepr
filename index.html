@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mô phỏng hình học phân tử — Mô hình VSEPR</title>
+<style>
+:root{--blue:#1b4f9c;--blue2:#2f7fe0;--teal:#0e7c7b;--purple:#7b4bb5;--pink:#e75480;--bg:#eef4fb;--card:#ffffff;--ink:#1e2a38;--muted:#5b6b7c;--green:#1e7d46;--amber:#b7791f;--red:#c0392b;--line:#d7e2ee}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:17px;line-height:1.55}
+header{background:linear-gradient(120deg,#123a75,#1b6fd6 55%,#0e7c7b);color:#fff;padding:26px 18px 22px;text-align:center}
+header h1{margin:0;font-size:32px;line-height:1.2}
+header p{margin:8px auto 0;max-width:820px;font-size:17px;opacity:.96}
+header .tag{display:inline-block;background:#ffd54d;color:#3a2b00;font-weight:700;border-radius:999px;padding:4px 14px;font-size:14px;margin-bottom:10px}
+nav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:2px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:9px 10px}
+nav a{color:var(--blue);text-decoration:none;font-weight:700;padding:7px 13px;border-radius:999px;font-size:15px}
+nav a:hover{background:#e3edfb}
+main{max-width:1120px;margin:0 auto;padding:18px 14px 30px}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 2px 10px rgba(20,60,120,.06)}
+h2{margin:0 0 6px;color:var(--blue);font-size:25px}
+h3{color:var(--blue);font-size:19px;margin:18px 0 8px}
+.lead{color:var(--muted);margin:0 0 12px}
+.small{font-size:14.5px;color:var(--muted)}
+.kicker{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:800;margin:0 0 4px}
+.rule{border-left:5px solid #ffd54d;background:#fff8e1;padding:12px 14px;border-radius:8px;margin:12px 0}
+.rule b{color:#7a5b00}
+.pill{display:inline-block;background:#e3edfb;color:var(--blue);border-radius:999px;padding:3px 11px;font-weight:700;font-size:14px;margin:2px}
+.pill.purple{background:#efe6f8;color:var(--purple)}
+.pill.green{background:#e2f3e7;color:var(--green)}
+.pill.amber{background:#fdf0d5;color:var(--amber)}
+/* Simulation layout */
+.sim-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start}
+.canvas-wrap{position:relative;background:radial-gradient(circle at 50% 42%,#ffffff 0%,#dcebfb 62%,#c8ddf5 100%);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+canvas#molCanvas{display:block;width:100%;height:430px;touch-action:none;cursor:grab}
+canvas#molCanvas:active{cursor:grabbing}
+.canvas-hint{position:absolute;left:10px;bottom:8px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:13.5px;color:var(--muted);pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:14.5px;padding:9px 4px 0;color:var(--muted)}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%;vertical-align:-2px;margin-right:5px;border:1px solid rgba(0,0,0,.18)}
+.lpdot{display:inline-block;width:15px;height:19px;vertical-align:-4px;margin-right:5px;background:radial-gradient(circle at 50% 30%,#c9a7f5,#7b4bb5);border-radius:50% 50% 50% 50%/60% 60% 40% 40%}
+.group-label{font-weight:800;color:var(--blue);font-size:14px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:2px solid #b9cdea;background:#fff;color:var(--blue);border-radius:999px;padding:7px 14px;font-size:15.5px;font-weight:700;cursor:pointer}
+.chip:hover{border-color:var(--blue2)}
+.chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chip.ext{border-style:dashed}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.controls label{font-size:15px;font-weight:600;display:flex;gap:6px;align-items:center;cursor:pointer}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:15.5px;font-weight:700;cursor:pointer}
+.btn:hover{background:#154a92}
+.btn.ghost{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+.btn.green{background:var(--green)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+input[type=range]{width:130px;accent-color:var(--blue)}
+.info-card{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfdff}
+.info-card h3{margin-top:0}
+.kv{display:grid;grid-template-columns:128px 1fr;gap:6px 10px;font-size:16px;margin:10px 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:600}
+.formula-big{font-size:30px;font-weight:800;color:var(--blue);letter-spacing:.02em}
+.formula-big sub{font-size:19px}
+.lewis-box{background:#fff;border:2px dashed #b9cdea;border-radius:12px;padding:12px 14px;text-align:center;font-size:21px;margin:10px 0;min-height:64px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}
+.lewis-box .small{flex-basis:100%;margin-top:4px}
+.latom{position:relative;display:inline-block;padding:14px 5px 12px;font-weight:800}
+.latom .d{position:absolute;left:50%;transform:translateX(-50%);font-size:15px;letter-spacing:3px;color:#333;line-height:1}
+.latom .d.t{top:0}.latom .d.b{bottom:0}
+.latom .d.l{left:-2px;top:50%;transform:translateY(-50%);letter-spacing:0}
+.latom .d.r{left:auto;right:-2px;top:50%;transform:translateY(-50%);letter-spacing:0}
+/* Table */
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:15.5px}
+th{background:var(--blue);color:#fff;padding:10px 9px;text-align:left}
+td{border:1px solid var(--line);padding:9px;vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#eef5ff}
+tbody tr.selected td{background:#fff3c4}
+td .ex{font-weight:700}
+tr.ext-row td{background:#faf7ff}
+/* Steps / wizard */
+.steps-bar{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.step-pill{border:2px solid #b9cdea;background:#fff;border-radius:999px;padding:7px 13px;font-weight:700;font-size:14.5px;color:var(--muted)}
+.step-pill.done{background:#e2f3e7;border-color:var(--green);color:var(--green)}
+.step-pill.now{background:var(--blue);border-color:var(--blue);color:#fff}
+.wizard{border:1px solid var(--line);border-radius:14px;padding:18px;background:#fbfdff}
+.wizard h3{margin-top:0}
+.wizard input[type=number],.wizard select,.wizard input[type=text]{font-size:17px;padding:10px 12px;border:2px solid #b9cdea;border-radius:10px;max-width:100%;background:#fff}
+.wizard input[type=number]{width:110px}
+.wizard label{display:block;font-weight:700;margin:12px 0 5px}
+.feedback{border-radius:10px;padding:11px 13px;margin-top:13px;display:none;font-size:16px}
+.feedback.ok{display:block;background:#e2f3e7;border:1px solid #9ed3ae;color:#14532d}
+.feedback.no{display:block;background:#fdecea;border:1px solid #f0a9a0;color:#7a1f16}
+.feedback.hint{display:block;background:#fff8e1;border:1px solid #f0d68a;color:#6b4e00}
+.formula-preview{font-size:26px;font-weight:800;color:var(--purple);margin:8px 0}
+.formula-preview sub{font-size:17px}
+/* Quiz */
+.q{border:1px solid var(--line);border-radius:12px;padding:14px;margin:11px 0}
+.q p{font-weight:700;margin:0 0 8px}
+.q label{display:block;font-weight:500;padding:6px 8px;border-radius:8px;cursor:pointer}
+.q label:hover{background:#eef5ff}
+.q .mark{font-weight:700;margin-top:7px;display:none}
+.q .mark.ok{display:block;color:var(--green)}
+.q .mark.no{display:block;color:var(--red)}
+.score-box{font-size:19px;font-weight:800;text-align:center;background:#e3edfb;border-radius:12px;padding:14px;display:none;margin-top:14px}
+/* Calculator */
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end}
+.calc label{font-weight:700;display:block;margin-bottom:5px}
+.calc select{font-size:17px;padding:10px 12px;border:2px solid #b9cdea;border-radius:10px;width:100%;background:#fff}
+.calc-result{margin-top:14px;border-radius:12px;padding:14px;background:#f2f7ff;border:1px solid #b9cdea;display:none}
+.calc-result.show{display:block}
+details{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin:10px 0;background:#fff}
+details summary{font-weight:700;cursor:pointer;color:var(--blue)}
+.repulsion{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.rep{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#fff}
+.rep .bar{height:14px;border-radius:999px;margin:8px 0}
+footer{text-align:center;color:var(--muted);font-size:15px;padding:8px 14px 26px}
+@media (max-width:860px){
+  .sim-grid{grid-template-columns:1fr}
+  canvas#molCanvas{height:360px}
+  header h1{font-size:26px}
+  .repulsion{grid-template-columns:1fr}
+  body{font-size:16.5px}
+}
+@media (max-width:420px){
+  canvas#molCanvas{height:320px}
+  .kv{grid-template-columns:110px 1fr}
+  section{padding:15px}
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="tag">Hóa học 10 · Bài 1: Liên kết hóa học</span>
+  <h1>Mô phỏng hình học phân tử<br>Mô hình VSEPR</h1>
+  <p>Cùng Cô Thanh, Minh &amp; Lan khám phá: vì sao H<sub>2</sub>O có dạng góc còn CO<sub>2</sub> lại có dạng đường thẳng — dù cả hai đều có 3 nguyên tử?</p>
+</header>
+<nav>
+  <a href="#mo-phong">1 · Mô phỏng 3D</a>
+  <a href="#cong-thuc">2 · Công thức VSEPR</a>
+  <a href="#huong-dan">3 · Hướng dẫn từng bước</a>
+  <a href="#luyen-tap">4 · Tra nhanh &amp; Luyện tập</a>
+</nav>
+<main>
+
+<!-- ============ 1. MÔ PHỎNG ============ -->
+<section id="mo-phong">
+  <p class="kicker">Phần 1 · Mô phỏng 3D</p>
+  <h2>Xoay phân tử và nhìn thấy cặp electron riêng đang “đẩy”</h2>
+  <p class="lead">Chọn một phân tử, kéo để xoay. Bật/tắt cặp electron riêng để thấy rõ sự khác nhau giữa <b>sắp xếp các miền electron</b> (tính cả cặp riêng) và <b>dạng hình học của phân tử</b> (chỉ tính vị trí các nguyên tử).</p>
+
+  <div id="molGroups"></div>
+
+  <div class="sim-grid" style="margin-top:14px">
+    <div>
+      <div class="canvas-wrap">
+        <canvas id="molCanvas" aria-label="Mô hình 3D của phân tử đang chọn"></canvas>
+        <span class="canvas-hint">Kéo để xoay · Cuộn / thanh trượt để thu phóng</span>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#e8e8e8"></span>Nguyên tử liên kết</span>
+        <span><span class="dot" style="background:#37474f"></span>Nguyên tử trung tâm</span>
+        <span><span class="lpdot"></span>Cặp electron riêng (E)</span>
+        <span>— Liên kết đơn · ═ Liên kết đôi</span>
+      </div>
+      <div class="controls">
+        <label><input type="checkbox" id="showLP" checked> Hiện cặp electron riêng</label>
+        <label><input type="checkbox" id="showAngle" checked> Hiện góc liên kết</label>
+        <label><input type="checkbox" id="autoRotate" checked> Tự xoay</label>
+        <label>Thu phóng <input type="range" id="zoom" min="70" max="140" value="100"></label>
+        <button class="btn ghost" type="button" id="resetView">Đặt lại góc nhìn</button>
+      </div>
+    </div>
+
+    <div class="info-card" aria-live="polite">
+      <div class="formula-big" id="infoFormula">H<sub>2</sub>O</div>
+      <div id="infoName" style="font-weight:700;color:var(--muted)">Nước</div>
+      <dl class="kv">
+        <dt>Nguyên tử trung tâm</dt><dd id="infoCentral">O</dd>
+        <dt>Công thức VSEPR</dt><dd id="infoVSEPR">AX<sub>2</sub>E<sub>2</sub></dd>
+        <dt>Số miền electron</dt><dd id="infoDomains">4 (n + m = 2 + 2)</dd>
+        <dt>Sắp xếp miền e</dt><dd id="infoArr">Tứ diện</dd>
+        <dt>Dạng hình học</dt><dd id="infoShape" style="color:var(--green)">Dạng góc</dd>
+        <dt>Góc liên kết</dt><dd id="infoAngle">≈ 104,5°</dd>
+        <dt>Lai hóa (trung tâm)</dt><dd id="infoHybrid">sp³</dd>
+      </dl>
+      <h3 style="font-size:16px">Công thức Lewis (rút gọn)</h3>
+      <div class="lewis-box" id="infoLewis"></div>
+      <p class="small" id="infoNote" style="margin:6px 0 0"></p>
+      <button class="btn" type="button" id="toWizard" style="margin-top:12px">Làm từng bước với phân tử này ↓</button>
+    </div>
+  </div>
+
+  <div class="rule"><b>Quy tắc vàng của VSEPR:</b> Các cặp electron đều mang điện âm nên luôn “ghét” nhau và đẩy nhau ra xa nhất có thể trong không gian. Hình học phân tử chính là cách sắp xếp sao cho lực đẩy giữa các cặp electron là nhỏ nhất.</div>
+
+  <h3>Lực đẩy không giống nhau — cặp riêng “hung dữ” hơn cặp chung</h3>
+  <p class="lead">Cặp electron riêng chỉ bị một hạt nhân hút nên “phình” ra, chiếm nhiều không gian hơn cặp electron chung. Vì vậy nó ép các liên kết lại gần nhau và làm góc liên kết nhỏ đi.</p>
+  <div class="repulsion">
+    <div class="rep"><b>Cặp riêng – cặp riêng</b><div class="bar" style="background:#c0392b"></div>Đẩy mạnh nhất</div>
+    <div class="rep"><b>Cặp riêng – cặp chung</b><div class="bar" style="background:#e67e22;width:72%;margin-left:auto;margin-right:auto"></div>Đẩy mạnh vừa</div>
+    <div class="rep"><b>Cặp chung – cặp chung</b><div class="bar" style="background:#27ae60;width:46%;margin-left:auto;margin-right:auto"></div>Đẩy yếu nhất</div>
+  </div>
+  <p class="small">Cặp riêng – cặp riêng &gt; cặp riêng – cặp chung &gt; cặp chung – cặp chung. Càng nhiều cặp riêng, góc liên kết càng bị ép nhỏ: CH<sub>4</sub> 109,5° → NH<sub>3</sub> ~107° → H<sub>2</sub>O ~104,5°.</p>
+</section>
+
+<!-- ============ 2. CÔNG THỨC VSEPR ============ -->
+<section id="cong-thuc">
+  <p class="kicker">Phần 2 · Công thức VSEPR</p>
+  <h2>Công thức AX<sub>n</sub>E<sub>m</sub> nói lên điều gì?</h2>
+  <p class="lead">Từ công thức Lewis của phân tử hay ion, ta đọc được công thức VSEPR. Bấm vào một hàng trong bảng để xem ngay mô hình 3D tương ứng.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+    <span class="pill">A — nguyên tử trung tâm</span>
+    <span class="pill purple">X — nguyên tử liên kết trực tiếp với A</span>
+    <span class="pill green">E — cặp electron riêng trên A</span>
+  </div>
+  <ul>
+    <li><b>n</b> = số nguyên tử liên kết trực tiếp với A = số miền electron liên kết. Một liên kết đôi hay liên kết ba cũng chỉ tính là <b>1</b> miền, 1 X (ví dụ: CO<sub>2</sub> có n = 2 dù có 2 liên kết đôi).</li>
+    <li><b>m</b> = số cặp electron riêng (cặp electron chưa liên kết) trên nguyên tử trung tâm A, đọc từ công thức Lewis.</li>
+    <li><b>n + m</b> = tổng số miền electron quanh A → quyết định <b>sắp xếp các miền electron</b>. Khi m = 0 thì dạng hình học trùng với sắp xếp miền; khi m &gt; 0 thì dạng hình học chỉ còn vị trí của các nguyên tử X.</li>
+    <li>Nếu m = 1, người ta viết gọn là E (ví dụ AX<sub>2</sub>E, AX<sub>3</sub>E) thay vì E<sub>1</sub>.</li>
+  </ul>
+
+  <h3>Bảng tra: từ AX<sub>n</sub>E<sub>m</sub> suy ra dạng hình học</h3>
+  <div class="table-wrap">
+    <table id="vseprTable">
+      <thead><tr>
+        <th>Công thức VSEPR</th><th>n + m</th><th>Sắp xếp các miền electron</th><th>Dạng hình học</th><th>Góc liên kết</th><th>Ví dụ</th><th>Lai hóa*</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p class="small">* Lai hóa theo tổng số miền electron (n + m): 2 → sp, 3 → sp², 4 → sp³. Các hàng “Mở rộng” (5–6 miền) theo bảng VSEPR trong tài liệu, vượt nội dung lai hóa sp/sp²/sp³ của lớp 10. Hàng có dấu * trong bảng gốc đã được sửa: CH<sub>4</sub> (AX<sub>4</sub>) không có cặp electron riêng.</p>
+
+  <details>
+    <summary>Nhắc lại: 4 bước vẽ công thức Lewis (nền tảng để đọc n và m)</summary>
+    <ol>
+      <li><b>Tính tổng số electron hóa trị</b> của phân tử/ion (cộng điện tích: ion âm cộng thêm, ion dương trừ đi).</li>
+      <li><b>Vẽ khung</b> với nguyên tử trung tâm là nguyên tử có ít electron hóa trị nhất / khó đạt octet nhất, nối với các nguyên tử xung quanh bằng liên kết đơn.</li>
+      <li><b>Điền electron để đạt octet</b> cho các nguyên tử xung quanh trước.</li>
+      <li><b>Tính electron còn lại</b> và tạo liên kết đôi/ba nếu nguyên tử trung tâm chưa đạt octet. Lưu ý ngoại lệ: nguyên tử trung tâm ở chu kì 3 trở đi có thể có nhiều hơn 8 electron xung quanh (ví dụ P trong PCl<sub>5</sub> có 10 electron), còn B trong BF<sub>3</sub> chỉ cần 6 electron đã bền.</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============ 3. HƯỚNG DẪN TỪNG BƯỚC ============ -->
+<section id="huong-dan">
+  <p class="kicker">Phần 3 · Hướng dẫn từng bước</p>
+  <h2>5 bước: từ công thức Lewis đến dạng hình học</h2>
+  <p class="lead">Công thức Lewis đã cho sẵn (em chỉ cần <b>đọc</b> từ đó). Làm đúng từng bước mới mở được bước tiếp theo. Sai thì đọc gợi ý và thử lại — không bị trừ điểm.</p>
+
+  <label for="wizardMol" style="font-weight:700">Chọn phân tử để luyện:</label>
+  <select id="wizardMol" style="font-size:17px;padding:10px 12px;border:2px solid #b9cdea;border-radius:10px;max-width:100%;background:#fff"></select>
+  <button class="btn ghost" type="button" id="wizardReset" style="margin-left:8px">Đổi phân tử / làm lại</button>
+
+  <div class="steps-bar" id="stepsBar"></div>
+
+  <div class="wizard">
+    <div class="lewis-box" id="wizardLewis" style="margin-top:0"></div>
+    <p class="small" style="text-align:center;margin-top:0">Công thức Lewis đã cho — hãy đọc n và m từ hình này.</p>
+    <h3 id="stepTitle"></h3>
+    <p id="stepQuestion"></p>
+    <div id="stepBody"></div>
+    <div class="feedback" id="stepFeedback"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      <button class="btn" type="button" id="stepCheck">Kiểm tra bước này</button>
+      <button class="btn ghost" type="button" id="stepHint">Xem gợi ý</button>
+      <button class="btn green" type="button" id="stepNext" disabled>Bước tiếp theo →</button>
+    </div>
+  </div>
+  <div id="wizardDone" style="display:none;margin-top:14px"></div>
+</section>
+
+<!-- ============ 4. TRA NHANH + LUYỆN TẬP ============ -->
+<section id="luyen-tap">
+  <p class="kicker">Phần 4 · Tra nhanh &amp; Luyện tập</p>
+  <h2>Tự tra nhanh khi chỉ biết n và m</h2>
+  <p class="lead">Đã biết n (số nguyên tử liên kết) và m (số cặp riêng)? Chọn hai số rồi bấm “Tra dạng hình học”.</p>
+  <div class="calc">
+    <div><label for="calcN">n — số nguyên tử X</label>
+      <select id="calcN"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+    <div><label for="calcM">m — số cặp electron riêng E</label>
+      <select id="calcM"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+    <div><button class="btn" type="button" id="calcBtn">Tra dạng hình học</button></div>
+  </div>
+  <div class="calc-result" id="calcResult"></div>
+
+  <h2 style="margin-top:26px">Luyện tập nhanh — 9 câu</h2>
+  <p class="lead">Chọn đáp án rồi bấm “Chấm điểm”. Có câu lấy đúng từ bài học của Cô Thanh: SO<sub>2</sub>, C<sub>2</sub>H<sub>2</sub> và CS<sub>2</sub>.</p>
+  <div id="quiz"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" type="button" id="quizCheck">Chấm điểm</button>
+    <button class="btn ghost" type="button" id="quizReset">Làm lại</button>
+  </div>
+  <div class="score-box" id="quizScore"></div>
+
+  <h3>Bản đồ tư duy tóm tắt</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <span class="pill">AX<sub>2</sub> → Đường thẳng → sp</span>
+    <span class="pill">AX<sub>3</sub> → Tam giác phẳng → sp²</span>
+    <span class="pill">AX<sub>4</sub> → Tứ diện → sp³</span>
+    <span class="pill purple">AX<sub>2</sub>E → Dạng góc → sp²</span>
+    <span class="pill purple">AX<sub>3</sub>E → Tháp tam giác → sp³</span>
+    <span class="pill purple">AX<sub>2</sub>E<sub>2</sub> → Dạng góc → sp³</span>
+  </div>
+  <p class="small" style="margin-top:10px">Vì sao cần học hình học phân tử? Hình dạng 3D quyết định cách phân tử “vừa” với nhau khi phản ứng, tính phân cực, khả năng phản ứng và cả hoạt tính sinh học — như chìa khóa phải vừa ổ khóa.</p>
+</section>
+</main>
+<footer>
+  Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh – THPT Võ Thị Sáu – Phường Gia Định – TP. Hồ Chí Minh.<br>
+  <span class="small">Nguồn: Giáo án Chuyên đề 1 – Bài 1. Liên kết hóa học; bảng VSEPR “Molecular Geometry” và bộ slide “Hình học phân tử” của Cô Thanh. Mở file bằng trình duyệt (tải file về máy rồi mở) để dùng đầy đủ mô phỏng 3D.</span>
+</footer>
+<script>
+"use strict";
+/* ================= DỮ LIỆU KHOA HỌC ================= */
+/* Hướng miền electron: dùng vectơ đơn vị đúng hình học lí tưởng.
+   Cặp riêng (E) ở vị trí xích đạo với 5 miền; đối nhau với 6 miền. */
+function N3(v){var l=Math.hypot(v[0],v[1],v[2]);return [v[0]/l,v[1]/l,v[2]/l];}
+var TRI=[[1,0,0],[-0.5,0.8660254,0],[-0.5,-0.8660254,0]];
+var TET=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(N3);
+var AXZ=[[0,0,1],[0,0,-1]];
+var OCT=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function B(el,d,order){return {k:"b",el:el,d:d,order:order||1};}
+function LP(d){return {k:"lp",d:d};}
+function L(sym,t,b){return '<span class="latom">'+sym+(t?'<span class="d t">'+t+'</span>':"")+(b?'<span class="d b">'+b+'</span>':"")+"</span>";}
+
+var GEO={
+ "2,0":{vsepr:"AX<sub>2</sub>",total:2,arr:"Đường thẳng",shape:"Đường thẳng",angle:"180°",hybrid:"sp",examples:"CO<sub>2</sub>, CS<sub>2</sub>, BeCl<sub>2</sub>"},
+ "3,0":{vsepr:"AX<sub>3</sub>",total:3,arr:"Tam giác phẳng",shape:"Tam giác phẳng",angle:"120°",hybrid:"sp²",examples:"BF<sub>3</sub>, HCHO"},
+ "2,1":{vsepr:"AX<sub>2</sub>E",total:3,arr:"Tam giác phẳng",shape:"Dạng góc",angle:"119° (&lt; 120°)",hybrid:"sp²",examples:"SO<sub>2</sub>"},
+ "4,0":{vsepr:"AX<sub>4</sub>",total:4,arr:"Tứ diện",shape:"Tứ diện",angle:"109,5°",hybrid:"sp³",examples:"CH<sub>4</sub>, CCl<sub>4</sub>"},
+ "3,1":{vsepr:"AX<sub>3</sub>E",total:4,arr:"Tứ diện",shape:"Tháp tam giác",angle:"~107°",hybrid:"sp³",examples:"NH<sub>3</sub>, NCl<sub>3</sub>"},
+ "2,2":{vsepr:"AX<sub>2</sub>E<sub>2</sub>",total:4,arr:"Tứ diện",shape:"Dạng góc",angle:"≈ 104,5°",hybrid:"sp³",examples:"H<sub>2</sub>O"},
+ "5,0":{vsepr:"AX<sub>5</sub>",total:5,arr:"Lưỡng tháp tam giác",shape:"Lưỡng tháp tam giác",angle:"90° và 120°",hybrid:"sp³d",examples:"PCl<sub>5</sub>",ext:true},
+ "4,1":{vsepr:"AX<sub>4</sub>E",total:5,arr:"Lưỡng tháp tam giác",shape:"Bập bênh (Seesaw)",angle:"&lt; 90° và &lt; 120°",hybrid:"sp³d",examples:"SF<sub>4</sub>",ext:true},
+ "3,2":{vsepr:"AX<sub>3</sub>E<sub>2</sub>",total:5,arr:"Lưỡng tháp tam giác",shape:"Chữ T",angle:"&lt; 90°",hybrid:"sp³d",examples:"ClF<sub>3</sub>",ext:true},
+ "2,3":{vsepr:"AX<sub>2</sub>E<sub>3</sub>",total:5,arr:"Lưỡng tháp tam giác",shape:"Đường thẳng",angle:"180°",hybrid:"sp³d",examples:"I<sub>3</sub><sup>−</sup>, XeF<sub>2</sub>",ext:true},
+ "6,0":{vsepr:"AX<sub>6</sub>",total:6,arr:"Bát diện",shape:"Bát diện",angle:"90°",hybrid:"sp³d²",examples:"SF<sub>6</sub>",ext:true},
+ "5,1":{vsepr:"AX<sub>5</sub>E",total:6,arr:"Bát diện",shape:"Tháp vuông",angle:"~90°",hybrid:"sp³d²",examples:"BrF<sub>5</sub>",ext:true},
+ "4,2":{vsepr:"AX<sub>4</sub>E<sub>2</sub>",total:6,arr:"Bát diện",shape:"Vuông phẳng",angle:"90°",hybrid:"sp³d²",examples:"XeF<sub>4</sub>",ext:true}
+};
+var SHAPES=["Đường thẳng","Tam giác phẳng","Tứ diện","Tháp tam giác","Dạng góc","Lưỡng tháp tam giác","Bập bênh (Seesaw)","Chữ T","Bát diện","Tháp vuông","Vuông phẳng"];
+var ANGLES=["180°","120°","109,5°","~107°","≈ 104,5°","119°","90° và 120°","< 90° và < 120°","< 90°","90°","~90°"];
+
+var MOLECULES=[
+ {id:"h2o",formula:"H<sub>2</sub>O",name:"Nước",central:"O",n:2,m:2,angleChoice:"≈ 104,5°",hybrid:"sp³",valence:8,ext:false,
+  lewis:"H – "+L("O","••","••")+" – H",
+  note:"2 cặp riêng đẩy rất mạnh nên góc H–O–H chỉ còn ≈ 104,5°, nhỏ hơn góc tứ diện 109,5°.",
+  domains:[B("H",N3([0.791,0,-0.612])),B("H",N3([-0.791,0,-0.612])),LP(N3([0,0.94,0.34])),LP(N3([0,-0.94,0.34]))]},
+ {id:"nh3",formula:"NH<sub>3</sub>",name:"Ammonia",central:"N",n:3,m:1,angleChoice:"~107°",hybrid:"sp³",valence:8,ext:false,
+  lewis:L("N","••","")+" – H<br><span class='small'>N nối với 3 H, còn 1 cặp riêng phía trên.</span>",
+  note:"1 cặp riêng ép 3 liên kết N–H lại gần nhau: góc ~107°, nhỏ hơn 109,5°. Mô hình vẽ đúng góc 107°: 3 liên kết H chụm về phía dưới, cặp riêng ở phía trên.",
+  domains:[B("H",[0,0.928,-0.372]),B("H",[-0.804,-0.464,-0.372]),B("H",[0.804,-0.464,-0.372]),LP([0,0,1])]},
+ {id:"ncl3",formula:"NCl<sub>3</sub>",name:"Nitrogen trichloride",central:"N",n:3,m:1,angleChoice:"~107°",hybrid:"sp³",valence:26,ext:false,
+  lewis:L("N","••","")+" nối với 3 Cl bằng 3 liên kết đơn.",
+  note:"Giống NH<sub>3</sub>: AX<sub>3</sub>E, dạng tháp tam giác (góc ~107°). Trong giáo án, NCl<sub>3</sub> là sản phẩm khi chlorine khử trùng hồ bơi gặp urea.",
+  domains:[B("Cl",[0,0.928,-0.372]),B("Cl",[-0.804,-0.464,-0.372]),B("Cl",[0.804,-0.464,-0.372]),LP([0,0,1])]},
+ {id:"so2",formula:"SO<sub>2</sub>",name:"Sulfur dioxide",central:"S",n:2,m:1,angleChoice:"119°",hybrid:"sp²",valence:18,ext:false,
+  lewis:L("O","••","••")+" = "+L("S","••","")+" = "+L("O","••","••")+"<br><span class='small'>Vẽ gọn dạng cộng hưởng O=S=O; S còn 1 cặp riêng.</span>",
+  note:"3 miền electron xếp tam giác phẳng, nhưng chỉ 2 nguyên tử O nhìn thấy được nên phân tử có dạng góc, góc O–S–O = 119° (&lt; 120°). Mô hình vẽ đúng góc 119°.",
+  domains:[B("O",[1,0,0],2),B("O",[-0.4848,0.8746,0],2),LP([-0.509,-0.8607,0])]},
+ {id:"co2",formula:"CO<sub>2</sub>",name:"Carbon dioxide",central:"C",n:2,m:0,angleChoice:"180°",hybrid:"sp",valence:16,ext:false,
+  lewis:L("O","••","••")+" = C = "+L("O","••","••"),
+  note:"C không có cặp riêng; 2 miền electron (2 liên kết đôi, mỗi liên kết tính 1 miền) đẩy nhau ra đối nhau → đường thẳng 180°.",
+  domains:[B("O",[1,0,0],2),B("O",[-1,0,0],2)]},
+ {id:"cs2",formula:"CS<sub>2</sub>",name:"Carbon disulfide",central:"C",n:2,m:0,angleChoice:"180°",hybrid:"sp",valence:16,ext:false,
+  lewis:L("S","••","••")+" = C = "+L("S","••","••"),
+  note:"Công thức Lewis S=C=S, giống hệt CO<sub>2</sub> → AX<sub>2</sub>, dạng đường thẳng.",
+  domains:[B("S",[1,0,0],2),B("S",[-1,0,0],2)]},
+ {id:"becl2",formula:"BeCl<sub>2</sub>",name:"Beryllium chloride",central:"Be",n:2,m:0,angleChoice:"180°",hybrid:"sp",valence:16,ext:false,
+  lewis:"Cl – Be – Cl",
+  note:"AX<sub>2</sub> lí tưởng: đường thẳng, góc 180°.",
+  domains:[B("Cl",[1,0,0]),B("Cl",[-1,0,0])]},
+ {id:"bf3",formula:"BF<sub>3</sub>",name:"Boron trifluoride",central:"B",n:3,m:0,angleChoice:"120°",hybrid:"sp²",valence:24,ext:false,
+  lewis:"F – "+L("B","","")+" – F<br><span class='small'>B nối với 3 F; B chỉ có 6 electron xung quanh (ngoại lệ octet) và không có cặp riêng.</span>",
+  note:"3 miền electron xếp tam giác phẳng, góc 120°.",
+  domains:[B("F",TRI[0]),B("F",TRI[1]),B("F",TRI[2])]},
+ {id:"hcho",formula:"HCHO",name:"Formaldehyde",central:"C",n:3,m:0,angleChoice:"120°",hybrid:"sp²",valence:12,ext:false,
+  lewis:"H – C(=O) – H<br><span class='small'>C nối với 2 H (đơn) và 1 O (đôi): 3 miền electron.</span>",
+  note:"3 miền electron → tam giác phẳng. Góc thực tế: H–C–H ≈ 116°, H–C–O ≈ 122°; lấy tròn ≈ 120°.",
+  domains:[B("H",TRI[1]),B("H",TRI[2]),B("O",TRI[0],2)]},
+ {id:"ch4",formula:"CH<sub>4</sub>",name:"Methane",central:"C",n:4,m:0,angleChoice:"109,5°",hybrid:"sp³",valence:8,ext:false,
+  lewis:"H – C – H<br><span class='small'>C nối với 4 H bằng 4 liên kết đơn, không có cặp riêng.</span>",
+  note:"4 miền electron xếp tứ diện đều: 4 liên kết C–H dài 109 pm, góc 109,5°.",
+  domains:[B("H",TET[0]),B("H",TET[1]),B("H",TET[2]),B("H",TET[3])]},
+ {id:"ccl4",formula:"CCl<sub>4</sub>",name:"Carbon tetrachloride",central:"C",n:4,m:0,angleChoice:"109,5°",hybrid:"sp³",valence:32,ext:false,
+  lewis:"Cl – C – Cl<br><span class='small'>C nối với 4 Cl bằng 4 liên kết đơn, không có cặp riêng.</span>",
+  note:"AX<sub>4</sub> → tứ diện, góc 109,5°. Bài luyện viết Lewis trong giáo án.",
+  domains:[B("Cl",TET[0]),B("Cl",TET[1]),B("Cl",TET[2]),B("Cl",TET[3])]},
+ {id:"pcl5",formula:"PCl<sub>5</sub>",name:"Phosphorus pentachloride",central:"P",n:5,m:0,angleChoice:"90° và 120°",hybrid:"sp³d",valence:40,ext:true,
+  lewis:"P ở giữa, nối với 5 Cl bằng 5 liên kết đơn; P có 10 electron xung quanh (vượt octet).",
+  note:"5 miền electron xếp lưỡng tháp tam giác: 3 Cl ở mặt phẳng xích đạo (góc 120°) và 2 Cl ở hai cực (góc 90° với mặt xích đạo).",
+  domains:[B("Cl",AXZ[0]),B("Cl",TRI[0]),B("Cl",AXZ[1]),B("Cl",TRI[1]),B("Cl",TRI[2])]},
+ {id:"sf4",formula:"SF<sub>4</sub>",name:"Sulfur tetrafluoride",central:"S",n:4,m:1,angleChoice:"< 90° và < 120°",hybrid:"sp³d",valence:34,ext:true,
+  lewis:"S nối với 4 F, còn 1 cặp riêng.",
+  note:"Cặp riêng chiếm vị trí xích đạo (chỗ rộng nhất) để lực đẩy nhỏ nhất → 4 nguyên tử F tạo dạng bập bênh.",
+  domains:[B("F",AXZ[0]),B("F",TRI[1]),B("F",AXZ[1]),B("F",TRI[2]),LP(TRI[0])]},
+ {id:"clf3",formula:"ClF<sub>3</sub>",name:"Chlorine trifluoride",central:"Cl",n:3,m:2,angleChoice:"< 90°",hybrid:"sp³d",valence:28,ext:true,
+  lewis:"Cl nối với 3 F, còn 2 cặp riêng.",
+  note:"2 cặp riêng đều ở vị trí xích đạo → 3 nguyên tử F tạo dạng chữ T, góc &lt; 90°.",
+  domains:[B("F",AXZ[0]),B("F",TRI[2]),B("F",AXZ[1]),LP(TRI[0]),LP(TRI[1])]},
+ {id:"i3",formula:"I<sub>3</sub><sup>−</sup>",name:"Ion triiodide",central:"I",n:2,m:3,angleChoice:"180°",hybrid:"sp³d",valence:22,ext:true,
+  lewis:"I – I – I, ion mang điện tích −1; I ở giữa có 3 cặp riêng.",
+  note:"3 cặp riêng chiếm cả mặt xích đạo → 2 nguyên tử I còn lại ở hai cực, đối nhau → đường thẳng 180°.",
+  domains:[B("I",AXZ[0]),B("I",AXZ[1]),LP(TRI[0]),LP(TRI[1]),LP(TRI[2])]},
+ {id:"xef2",formula:"XeF<sub>2</sub>",name:"Xenon difluoride",central:"Xe",n:2,m:3,angleChoice:"180°",hybrid:"sp³d",valence:22,ext:true,
+  lewis:"F – Xe – F; Xe có 3 cặp riêng ở mặt xích đạo.",
+  note:"AX<sub>2</sub>E<sub>3</sub> → đường thẳng 180°, giống I<sub>3</sub><sup>−</sup>.",
+  domains:[B("F",AXZ[0]),B("F",AXZ[1]),LP(TRI[0]),LP(TRI[1]),LP(TRI[2])]},
+ {id:"sf6",formula:"SF<sub>6</sub>",name:"Sulfur hexafluoride",central:"S",n:6,m:0,angleChoice:"90°",hybrid:"sp³d²",valence:48,ext:true,
+  lewis:"S ở giữa, nối với 6 F bằng 6 liên kết đơn; S có 12 electron xung quanh (vượt octet).",
+  note:"6 miền electron xếp bát diện: mọi góc kề nhau đều 90°.",
+  domains:[B("F",OCT[0]),B("F",OCT[2]),B("F",OCT[1]),B("F",OCT[3]),B("F",OCT[4]),B("F",OCT[5])]},
+ {id:"brf5",formula:"BrF<sub>5</sub>",name:"Bromine pentafluoride",central:"Br",n:5,m:1,angleChoice:"~90°",hybrid:"sp³d²",valence:42,ext:true,
+  lewis:"Br nối với 5 F, còn 1 cặp riêng.",
+  note:"Mở rộng: 1 cặp riêng → 5 nguyên tử F tạo dạng tháp vuông, góc ~90°.",
+  domains:[B("F",OCT[0]),B("F",OCT[2]),B("F",OCT[1]),B("F",OCT[3]),B("F",OCT[4]),LP(OCT[5])]},
+ {id:"xef4",formula:"XeF<sub>4</sub>",name:"Xenon tetrafluoride",central:"Xe",n:4,m:2,angleChoice:"90°",hybrid:"sp³d²",valence:36,ext:true,
+  lewis:"Xe nối với 4 F, còn 2 cặp riêng đối nhau.",
+  note:"Mở rộng: 2 cặp riêng đối nhau ở hai cực → 4 nguyên tử F tạo dạng vuông phẳng, góc 90°.",
+  domains:[B("F",OCT[0]),B("F",OCT[2]),B("F",OCT[1]),B("F",OCT[3]),LP(OCT[4]),LP(OCT[5])]}
+];
+var EL_COLOR={H:"#e9edf2",O:"#e53935",N:"#1565c0",C:"#37474f",S:"#f9a825",F:"#66bb6a",Cl:"#2e7d32",B:"#ec407a",P:"#ef6c00",Be:"#8e24aa",I:"#6a1b9a",Xe:"#00838f",Br:"#ad1457"};
+var EL_TEXT={H:"#1e2a38",S:"#1e2a38",F:"#12331a"};
+function geoOf(m){return GEO[m.n+","+m.m];}
+function vseprHTML(m){if(m.m===0)return "AX<sub>"+m.n+"</sub>";if(m.m===1)return "AX<sub>"+m.n+"</sub>E";return "AX<sub>"+m.n+"</sub>E<sub>"+m.m+"</sub>";}
+function subFormula(html){return html;}
+</script>
+<script>
+"use strict";
+window.scrollToEl=function(el){if(el&&typeof el.scrollIntoView==="function")el.scrollIntoView({behavior:"smooth"});};
+/* ================= MÔ PHỎNG 3D (Canvas, không cần thư viện ngoài) ================= */
+var currentId="h2o";
+var rotX=0.42, rotY=0.65, zoomF=1, showLP=true, showAngle=true, autoRot=true;
+var canvas=document.getElementById("molCanvas"), ctx=canvas.getContext("2d");
+var molGroups=document.getElementById("molGroups");
+function molById(id){for(var i=0;i<MOLECULES.length;i++)if(MOLECULES[i].id===id)return MOLECULES[i];return MOLECULES[0];}
+function groupLabel(total){return total+" miền electron (n + m = "+total+")";}
+(function buildChips(){
+  var totals=[2,3,4,5,6], html="";
+  totals.forEach(function(t){
+    html+='<div class="group-label">'+groupLabel(t)+"</div><div class='chips'>";
+    MOLECULES.forEach(function(m){
+      if(m.n+m.m!==t)return;
+      html+='<button type="button" class="chip'+(m.ext?" ext":"")+'" data-mol="'+m.id+'">'+m.formula+(m.ext?" *":"")+"</button>";
+    });
+    html+="</div>";
+  });
+  molGroups.innerHTML=html+"<p class='small'>* Mở rộng theo bảng VSEPR (5–6 miền electron).</p>";
+  molGroups.querySelectorAll(".chip").forEach(function(b){
+    b.addEventListener("click",function(){selectMolecule(b.getAttribute("data-mol"));});
+  });
+})();
+function resizeCanvas(){
+  var dpr=window.devicePixelRatio||1, w=canvas.clientWidth, h=canvas.clientHeight;
+  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function rot(d){
+  var cy=Math.cos(rotY),sy=Math.sin(rotY),cx=Math.cos(rotX),sx=Math.sin(rotX);
+  var x1=d[0]*cy+d[2]*sy, z1=-d[0]*sy+d[2]*cy;
+  var y1=d[1]*cx-z1*sx, z2=d[1]*sx+z1*cx;
+  return [x1,y1,z2];
+}
+function project(d,S,cx,cy){var r=rot(d);return {x:cx+r[0]*S,y:cy-r[1]*S,z:r[2]};}
+function slerp(a,b,t){
+  var dot=Math.max(-1,Math.min(1,a[0]*b[0]+a[1]*b[1]+a[2]*b[2]));
+  if(dot<-0.9999){
+    var ax=[a[1],-a[0],0]; if(Math.hypot(ax[0],ax[1],ax[2])<0.01)ax=[0,0,1];
+    ax=N3(ax); var ang=Math.PI*t, c=Math.cos(ang), s=Math.sin(ang);
+    var cross=[ax[1]*a[2]-ax[2]*a[1],ax[2]*a[0]-ax[0]*a[2],ax[0]*a[1]-ax[1]*a[0]];
+    var dt=ax[0]*a[0]+ax[1]*a[1]+ax[2]*a[2];
+    return [a[0]*c+cross[0]*s+ax[0]*dt*(1-c),a[1]*c+cross[1]*s+ax[1]*dt*(1-c),a[2]*c+cross[2]*s+ax[2]*dt*(1-c)];
+  }
+  var th=Math.acos(dot), s0=Math.sin((1-t)*th)/Math.sin(th), s1=Math.sin(t*th)/Math.sin(th);
+  return [a[0]*s0+b[0]*s1,a[1]*s0+b[1]*s1,a[2]*s0+b[2]*s1];
+}
+function drawAtom(x,y,r,el,central){
+  var col=EL_COLOR[el]||"#78909c";
+  var g=ctx.createRadialGradient(x-r*0.35,y-r*0.4,r*0.1,x,y,r);
+  g.addColorStop(0,"rgba(255,255,255,.85)");g.addColorStop(0.25,col);g.addColorStop(1,"rgba(0,0,0,.28)");
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.lineWidth=1.5;ctx.strokeStyle="rgba(0,0,0,.3)";ctx.stroke();
+  ctx.fillStyle=EL_TEXT[el]||"#ffffff";ctx.font="bold "+Math.round(r*0.85)+"px 'Segoe UI',Roboto,Arial,sans-serif";
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(el,x,y+1);
+}
+function drawLP(x,y,ang,sf,z){
+  ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+  var rx=30*sf, ry=17*sf;
+  var g=ctx.createRadialGradient(-rx*0.2,0,2,0,0,rx);
+  g.addColorStop(0,"#d9bdf5");g.addColorStop(1,"#7b4bb5");
+  ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.lineWidth=1.5;ctx.strokeStyle="rgba(90,40,140,.55)";ctx.stroke();
+  ctx.fillStyle="#fff";ctx.font="bold "+Math.round(15*sf+4)+"px Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText("••",0,1);ctx.restore();
+}
+function draw(){
+  resizeCanvas();
+  var W=canvas.clientWidth,H=canvas.clientHeight,cx=W/2,cy=H/2;
+  var S=Math.min(W,H)*0.34*zoomF;
+  var m=molById(currentId);
+  ctx.clearRect(0,0,W,H);
+  /* Trục mờ giúp cảm nhận chiều sâu */
+  ctx.strokeStyle="rgba(27,79,156,.14)";ctx.lineWidth=1;ctx.setLineDash([4,5]);
+  ctx.beginPath();ctx.moveTo(cx-S*1.25,cy);ctx.lineTo(cx+S*1.25,cy);ctx.moveTo(cx,cy-S*1.25);ctx.lineTo(cx,cy+S*1.25);ctx.stroke();ctx.setLineDash([]);
+  var center=project([0,0,0],S,cx,cy);
+  var bonds=m.domains.filter(function(d){return d.k==="b";});
+  /* Vẽ liên kết trước */
+  bonds.forEach(function(d){
+    var p=project(d.d,S,cx,cy);
+    var w=7*(0.75+0.25*p.z);
+    ctx.strokeStyle="#7d8ea0";ctx.lineWidth=w;ctx.lineCap="round";
+    if(d.order===2){
+      var dx=p.x-center.x, dy=p.y-center.y, len=Math.hypot(dx,dy)||1, off=4.5;
+      var px=-dy/len*off, py=dx/len*off;
+      ctx.beginPath();ctx.moveTo(center.x+px,center.y+py);ctx.lineTo(p.x+px,p.y+py);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(center.x-px,center.y-py);ctx.lineTo(p.x-px,p.y-py);ctx.stroke();
+    }else{
+      ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+    }
+  });
+  /* Cung góc giữa 2 liên kết đầu tiên */
+  if(showAngle&&bonds.length>=2){
+    var pts=[],i;
+    for(i=0;i<=22;i++){var t=i/22, v=slerp(bonds[0].d,bonds[1].d,t);pts.push(project([v[0]*0.58,v[1]*0.58,v[2]*0.58],S,cx,cy));}
+    ctx.strokeStyle="#c0392b";ctx.lineWidth=2.5;ctx.setLineDash([6,4]);ctx.beginPath();
+    pts.forEach(function(p,idx){if(idx===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});
+    ctx.stroke();ctx.setLineDash([]);
+    var mid=slerp(bonds[0].d,bonds[1].d,0.5);
+    var lp=project([mid[0]*0.8,mid[1]*0.8,mid[2]*0.8],S,cx,cy);
+    var label=m.angleChoice;ctx.font="bold 15px 'Segoe UI',Roboto,Arial,sans-serif";
+    var tw=ctx.measureText(label).width+18;
+    ctx.fillStyle="rgba(255,255,255,.95)";ctx.strokeStyle="#c0392b";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(lp.x-tw/2,lp.y-13,tw,26,13);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#922b21";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(label,lp.x,lp.y+1);
+  }
+  /* Nguyên tử + cặp riêng, xếp theo độ sâu (xa vẽ trước) */
+  var items=[];
+  items.push({z:center.z,type:"center"});
+  m.domains.forEach(function(d){
+    if(d.k==="lp"&&!showLP)return;
+    var p=project([d.d[0]*(d.k==="lp"?0.62:1),d.d[1]*(d.k==="lp"?0.62:1),d.d[2]*(d.k==="lp"?0.62:1)],S,cx,cy);
+    items.push({z:p.z,type:d.k,x:p.x,y:p.y,d:d});
+  });
+  items.sort(function(a,b){return a.z-b.z;});
+  var sf=Math.max(0.7,S/150);
+  items.forEach(function(it){
+    if(it.type==="center"){
+      drawAtom(center.x,center.y,30*sf*1.12,m.central,true);
+    }else if(it.type==="b"){
+      var r=30*sf*(it.d.el==="H"?0.8:1);
+      drawAtom(it.x,it.y,r,it.d.el,false);
+    }else if(it.type==="lp"){
+      var dirP=project(it.d.d,S,cx,cy);
+      var ang=Math.atan2(it.y-center.y,it.x-center.x);
+      drawLP(it.x,it.y,ang,sf,it.z);
+    }
+  });
+  if(autoRot)rotY+=0.006;
+  requestAnimationFrame(draw);
+}
+/* Kéo xoay + lăn chuột */
+var dragging=false,lastX=0,lastY=0;
+canvas.addEventListener("pointerdown",function(e){dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener("pointermove",function(e){if(!dragging)return;rotY+=(e.clientX-lastX)*0.011;rotX=Math.max(-1.15,Math.min(1.15,rotX+(e.clientY-lastY)*0.011));lastX=e.clientX;lastY=e.clientY;});
+canvas.addEventListener("pointerup",function(){dragging=false;});
+canvas.addEventListener("wheel",function(e){e.preventDefault();var z=document.getElementById("zoom");z.value=Math.max(70,Math.min(140,parseInt(z.value,10)+(e.deltaY<0?6:-6)));zoomF=parseInt(z.value,10)/100;},{passive:false});
+document.getElementById("showLP").addEventListener("change",function(e){showLP=e.target.checked;});
+document.getElementById("showAngle").addEventListener("change",function(e){showAngle=e.target.checked;});
+document.getElementById("autoRotate").addEventListener("change",function(e){autoRot=e.target.checked;});
+document.getElementById("zoom").addEventListener("input",function(e){zoomF=parseInt(e.target.value,10)/100;});
+document.getElementById("resetView").addEventListener("click",function(){rotX=0.42;rotY=0.65;});
+function selectMolecule(id){
+  currentId=id;var m=molById(id),g=geoOf(m);
+  document.getElementById("infoFormula").innerHTML=m.formula;
+  document.getElementById("infoName").textContent=m.name+(m.ext?" (mở rộng)":"");
+  document.getElementById("infoCentral").textContent=m.central+" (A)";
+  document.getElementById("infoVSEPR").innerHTML=vseprHTML(m);
+  document.getElementById("infoDomains").textContent=g.total+" (n + m = "+m.n+" + "+m.m+")";
+  document.getElementById("infoArr").textContent=g.arr;
+  document.getElementById("infoShape").textContent=g.shape;
+  document.getElementById("infoAngle").textContent=g.angle;
+  document.getElementById("infoHybrid").textContent=g.hybrid+(g.total<=4?"":" (mở rộng)");
+  document.getElementById("infoLewis").innerHTML=m.lewis+"<span class='small'>Tổng số electron hóa trị: "+m.valence+"e</span>";
+  document.getElementById("infoNote").textContent=m.note;
+  document.querySelectorAll(".chip").forEach(function(c){c.classList.toggle("active",c.getAttribute("data-mol")===id);});
+  document.querySelectorAll("#vseprTable tbody tr").forEach(function(r){r.classList.toggle("selected",r.getAttribute("data-key")===(m.n+","+m.m));});
+}
+document.getElementById("toWizard").addEventListener("click",function(){
+  document.getElementById("wizardMol").value=currentId;initWizard();
+  scrollToEl(document.getElementById("huong-dan"));
+});
+/* ================= BẢNG VSEPR ================= */
+(function buildTable(){
+  var order=["2,0","3,0","2,1","4,0","3,1","2,2","5,0","4,1","3,2","2,3","6,0","5,1","4,2"];
+  var tb=document.querySelector("#vseprTable tbody");
+  order.forEach(function(k){
+    var g=GEO[k],parts=k.split(","),n=+parts[0],mm=+parts[1];
+    var tr=document.createElement("tr");tr.setAttribute("data-key",k);if(g.ext)tr.className="ext-row";
+    tr.innerHTML="<td><b>"+g.vsepr+"</b>"+(g.ext?" <span class='pill purple'>Mở rộng</span>":"")+"</td><td>"+g.total+"</td><td>"+g.arr+"</td><td><b>"+g.shape+"</b></td><td>"+g.angle+"</td><td class='ex'>"+g.examples+"</td><td>"+g.hybrid+"</td>";
+    tr.addEventListener("click",function(){
+      var target=null;MOLECULES.forEach(function(m){if(!target&&m.n===n&&m.m===mm)target=m;});
+      if(target){selectMolecule(target.id);scrollToEl(document.getElementById("mo-phong"));}
+    });
+    tb.appendChild(tr);
+  });
+})();
+selectMolecule("h2o");
+requestAnimationFrame(draw);
+</script>
+<script>
+"use strict";
+/* ================= HƯỚNG DẪN TỪNG BƯỚC ================= */
+var wizMol="h2o", wizStep=0, wizPassed=[false,false,false,false,false];
+var stepBar=document.getElementById("stepsBar");
+var STEP_TITLES=["Bước 1 · Nguyên tử trung tâm & tổng electron hóa trị","Bước 2 · Đếm n — số nguyên tử liên kết","Bước 3 · Đếm m — số cặp electron riêng","Bước 4 · Viết công thức VSEPR","Bước 5 · Suy ra dạng hình học & góc liên kết"];
+function wizM(){return molById(wizMol);}
+function initWizard(){
+  wizMol=document.getElementById("wizardMol").value; wizStep=0; wizPassed=[false,false,false,false,false];
+  document.getElementById("wizardDone").style.display="none";
+  renderStepsBar(); renderStep();
+}
+function renderStepsBar(){
+  stepBar.innerHTML=STEP_TITLES.map(function(t,i){
+    var cls="step-pill"+(wizPassed[i]?" done":(i===wizStep?" now":""));
+    return '<span class="'+cls+'">'+(i+1)+". "+t.split(" · ")[1]+"</span>";
+  }).join("");
+}
+function fb(kind,msg){var f=document.getElementById("stepFeedback");f.className="feedback "+kind;f.innerHTML=msg;}
+function hideFb(){var f=document.getElementById("stepFeedback");f.className="feedback";f.innerHTML="";}
+function renderStep(){
+  var m=wizM(), g=geoOf(m);
+  hideFb(); document.getElementById("stepNext").disabled=!wizPassed[wizStep];
+  document.getElementById("wizardLewis").innerHTML="<b>"+m.formula+"</b>&nbsp;&nbsp;"+m.lewis+"<span class='small'>Nguyên tử trung tâm: "+m.central+" · Công thức Lewis đã cho sẵn</span>";
+  document.getElementById("stepTitle").textContent=STEP_TITLES[wizStep];
+  var body=document.getElementById("stepBody"), q=document.getElementById("stepQuestion");
+  if(wizStep===0){
+    var els=[]; m.domains.forEach(function(d){if(d.k==="b"&&els.indexOf(d.el)<0)els.push(d.el);});
+    if(els.indexOf(m.central)<0)els.push(m.central);
+    els.sort();
+    q.textContent="Nhìn vào công thức Lewis: nguyên tử nào ở giữa, nối với tất cả các nguyên tử còn lại? Và tổng số electron hóa trị của phân tử/ion là bao nhiêu?";
+    body.innerHTML='<label>Nguyên tử trung tâm (A) là:</label><select id="wCentral"><option value="">— Chọn —</option>'+els.map(function(e){return "<option>"+e+"</option>";}).join("")+'</select>'
+      +'<label>Tổng số electron hóa trị (đếm cả điện tích ion, nếu có):</label><input type="number" id="wTotal" min="0" max="60" placeholder="Ví dụ: 8"> electron';
+  }else if(wizStep===1){
+    q.textContent="Đếm số nguyên tử liên kết trực tiếp với nguyên tử trung tâm "+m.central+". Nhớ: liên kết đôi hay liên kết ba cũng chỉ tính là 1.";
+    body.innerHTML='<label>n = số nguyên tử liên kết trực tiếp với '+m.central+':</label><input type="number" id="wN" min="0" max="6" placeholder="n = ?">';
+  }else if(wizStep===2){
+    q.textContent="Đếm số cặp chấm (cặp electron chưa liên kết) còn lại trên nguyên tử trung tâm "+m.central+" trong công thức Lewis.";
+    body.innerHTML='<label>m = số cặp electron riêng trên '+m.central+':</label><input type="number" id="wM" min="0" max="3" placeholder="m = ?">';
+  }else if(wizStep===3){
+    q.textContent="Ghép n và m vào khung AXnEm. Nếu m = 0 thì không viết E; nếu m = 1 thì viết gọn là E.";
+    body.innerHTML='<label>Công thức VSEPR:</label><div>A X <input type="number" id="wN2" min="0" max="6" style="width:80px"> &nbsp;E <input type="number" id="wM2" min="0" max="3" style="width:80px" placeholder="0 nếu không có"></div><div class="formula-preview" id="wPreview">AX<sub>?</sub></div><p class="small">Tổng số miền electron n + m = <b id="wTotalDom">?</b></p>';
+    var upd=function(){
+      var n=document.getElementById("wN2").value, mm=document.getElementById("wM2").value;
+      var s="AX"+(n!==""?"<sub>"+n+"</sub>":"<sub>?</sub>");
+      if(mm!==""&&+mm>0)s+="E"+(+mm===1?"":"<sub>"+mm+"</sub>");
+      document.getElementById("wPreview").innerHTML=s;
+      document.getElementById("wTotalDom").textContent=(n!==""&&mm!=="")?(+n+ +mm):"?";
+    };
+    document.getElementById("wN2").addEventListener("input",upd);
+    document.getElementById("wM2").addEventListener("input",upd);
+  }else{
+    q.textContent="Với n + m = "+(m.n+m.m)+" miền electron, sắp xếp các miền là “"+g.arr+"”. Chỉ tính vị trí các nguyên tử X, phân tử có dạng gì và góc liên kết là bao nhiêu?";
+    body.innerHTML='<label>Dạng hình học của phân tử:</label><select id="wShape"><option value="">— Chọn —</option>'+SHAPES.map(function(s){return "<option>"+s+"</option>";}).join("")+'</select>'
+      +'<label>Góc liên kết:</label><select id="wAngle"><option value="">— Chọn —</option>'+ANGLES.map(function(a){return "<option>"+a+"</option>";}).join("")+'</select>';
+  }
+}
+function checkStep(){
+  var m=wizM(), g=geoOf(m);
+  if(wizStep===0){
+    var c=document.getElementById("wCentral").value, t=document.getElementById("wTotal").value;
+    if(c===m.central&&+t===m.valence){passStep("Đúng rồi! Nguyên tử trung tâm là <b>"+m.central+"</b>, tổng số electron hóa trị là <b>"+m.valence+"</b>.");}
+    else fb("no","Chưa đúng. Hãy xem lại: nguyên tử ở giữa khung Lewis là nguyên tử nào? Tổng electron hóa trị = tổng electron hóa trị của từng nguyên tử (± điện tích ion). Bấm “Xem gợi ý” nếu cần.");
+  }else if(wizStep===1){
+    var n=document.getElementById("wN").value;
+    if(+n===m.n)passStep("Đúng! Có <b>"+m.n+"</b> nguyên tử liên kết trực tiếp với "+m.central+" nên n = "+m.n+".");
+    else fb("no","Chưa đúng. Đếm lại các nguyên tử nối trực tiếp với "+m.central+" trong công thức Lewis (liên kết đôi/ba vẫn tính là 1 nguyên tử).");
+  }else if(wizStep===2){
+    var mm=document.getElementById("wM").value;
+    if(+mm===m.m)passStep("Đúng! Trên "+m.central+" còn <b>"+m.m+"</b> cặp electron riêng nên m = "+m.m+".");
+    else fb("no","Chưa đúng. Đếm lại các cặp chấm còn lại trên "+m.central+" — cặp đã dùng để tạo liên kết thì không tính.");
+  }else if(wizStep===3){
+    var n=document.getElementById("wN2").value, mm=document.getElementById("wM2").value;
+    var mmOk=(m.m===0&&(mm===""||+mm===0))||+mm===m.m;
+    if(+n===m.n&&mmOk)passStep("Chính xác! Công thức VSEPR là <b>"+vseprHTML(m)+"</b>, tổng số miền electron n + m = "+(m.n+m.m)+".");
+    else fb("no","Chưa đúng. n là số nguyên tử liên kết, m là số cặp riêng — ghép đúng hai số đó vào khung AX<sub>n</sub>E<sub>m</sub> nhé.");
+  }else{
+    var s=document.getElementById("wShape").value, a=document.getElementById("wAngle").value;
+    if(s===g.shape&&a===m.angleChoice){
+      passStep("Hoàn thành! <b>"+m.formula+"</b>: "+vseprHTML(m)+" → sắp xếp miền: "+g.arr+" → dạng hình học: <b>"+g.shape+"</b>, góc liên kết "+g.angle+".");
+      showDone(m,g);
+    }
+    else fb("no","Chưa đúng một trong hai ý. Nhớ: dạng hình học chỉ tính vị trí các nguyên tử X; cặp riêng chỉ làm góc nhỏ đi chứ không tạo thêm “đỉnh” cho hình.");
+  }
+}
+function passStep(msg){
+  wizPassed[wizStep]=true; fb("ok",msg);
+  document.getElementById("stepNext").disabled=false; renderStepsBar();
+}
+function showDone(m,g){
+  var d=document.getElementById("wizardDone");
+  d.style.display="block";
+  d.innerHTML='<div class="rule"><b>🎉 Xong 5 bước!</b> '+m.formula+' ('+m.name+'): công thức VSEPR <b>'+vseprHTML(m)+'</b> → '+g.arr+' → dạng <b>'+g.shape+'</b>, góc '+g.angle+', lai hóa '+g.hybrid+'.<br><button class="btn" type="button" id="doneSim" style="margin-top:10px">Xem mô hình 3D của '+m.formula+'</button></div>';
+  document.getElementById("doneSim").addEventListener("click",function(){selectMolecule(m.id);scrollToEl(document.getElementById("mo-phong"));});
+}
+document.getElementById("stepCheck").addEventListener("click",checkStep);
+document.getElementById("stepHint").addEventListener("click",function(){
+  var m=wizM(), g=geoOf(m);
+  var hints=[
+    "Gợi ý: nguyên tử trung tâm là <b>"+m.central+"</b>. Tổng electron hóa trị của "+m.formula+" là <b>"+m.valence+"</b> electron.",
+    "Gợi ý: "+m.formula+" có <b>"+m.n+"</b> nguyên tử nối trực tiếp với "+m.central+" nên n = "+m.n+".",
+    "Gợi ý: trên "+m.central+" còn <b>"+m.m+"</b> cặp electron riêng nên m = "+m.m+".",
+    "Gợi ý: công thức VSEPR là <b>"+vseprHTML(m)+"</b> (n = "+m.n+", m = "+m.m+").",
+    "Gợi ý: dạng hình học là <b>"+g.shape+"</b>, góc liên kết <b>"+m.angleChoice+"</b>."
+  ];
+  fb("hint",hints[wizStep]);
+});
+document.getElementById("stepNext").addEventListener("click",function(){
+  if(wizStep<4){wizStep++;renderStepsBar();renderStep();scrollToEl(document.getElementById("huong-dan"));}
+});
+document.getElementById("wizardReset").addEventListener("click",initWizard);
+document.getElementById("wizardMol").addEventListener("change",initWizard);
+(function buildWizardSelect(){
+  var sel=document.getElementById("wizardMol");
+  MOLECULES.forEach(function(m){var o=document.createElement("option");o.value=m.id;o.innerHTML=m.formula+" — "+m.name;sel.appendChild(o);});
+  sel.value="h2o";
+})();
+initWizard();
+/* ================= TRA NHANH ================= */
+document.getElementById("calcBtn").addEventListener("click",function(){
+  var n=document.getElementById("calcN").value, mm=document.getElementById("calcM").value;
+  var g=GEO[n+","+mm], r=document.getElementById("calcResult");
+  if(g){
+    r.className="calc-result show";
+    r.innerHTML="<b>Công thức: "+g.vsepr+"</b> &nbsp;·&nbsp; Tổng số miền electron: <b>"+g.total+"</b><br>Sắp xếp các miền electron: <b>"+g.arr+"</b> → Dạng hình học: <b>"+g.shape+"</b> · Góc liên kết: <b>"+g.angle+"</b> · Lai hóa: <b>"+g.hybrid+"</b><br><span class='small'>Ví dụ: "+g.examples+"</span>";
+  }else{
+    r.className="calc-result show";
+    r.innerHTML="Tổ hợp n = "+n+", m = "+mm+" (tổng "+(+n+ +mm)+" miền) <b>không có trong bảng tra</b> của bài học — hoặc không bền, hoặc vượt chương trình lớp 10. Hãy kiểm tra lại n, m đọc từ công thức Lewis.";
+  }
+});
+/* ================= LUYỆN TẬP ================= */
+var QUIZ=[
+ {q:"Phân tử SO<sub>2</sub> có hình dạng tương ứng theo mô hình VSEPR là gì?",opts:["Đường thẳng","Dạng góc","Tam giác phẳng","Tứ diện"],a:1,ex:"SO<sub>2</sub> là AX<sub>2</sub>E: 3 miền xếp tam giác phẳng, 1 cặp riêng ép góc còn 119° → dạng góc."},
+ {q:"Công thức VSEPR của phân tử H<sub>2</sub>O là gì?",opts:["AX<sub>3</sub>E","AX<sub>2</sub>E","AX<sub>2</sub>E<sub>2</sub>","AX<sub>4</sub>"],a:2,ex:"O liên kết với 2 H (n = 2) và còn 2 cặp riêng (m = 2) → AX<sub>2</sub>E<sub>2</sub>."},
+ {q:"Góc liên kết H–N–H trong phân tử NH<sub>3</sub> xấp xỉ bằng bao nhiêu?",opts:["109,5°","120°","~107°","180°"],a:2,ex:"NH<sub>3</sub> là AX<sub>3</sub>E: 1 cặp riêng ép góc từ 109,5° xuống ~107°."},
+ {q:"Sắp xếp các miền electron trong phân tử CH<sub>4</sub> là dạng nào?",opts:["Tam giác phẳng","Đường thẳng","Bát diện","Tứ diện"],a:3,ex:"CH<sub>4</sub> là AX<sub>4</sub>: 4 miền electron xếp tứ diện, góc 109,5°."},
+ {q:"Phân tử BF<sub>3</sub> (AX<sub>3</sub>) có dạng hình học nào?",opts:["Tam giác phẳng","Tháp tam giác","Dạng góc","Tứ diện"],a:0,ex:"Không có cặp riêng nên dạng hình học trùng với sắp xếp miền: tam giác phẳng, góc 120°."},
+ {q:"Phân tử PCl<sub>5</sub> (AX<sub>5</sub>) có các góc liên kết là:",opts:["109,5°","180°","90° và 120°","≈ 104,5°"],a:2,ex:"Lưỡng tháp tam giác: góc trong mặt xích đạo 120°, góc giữa cực và xích đạo 90°."},
+ {q:"Nguyên tử C trong phân tử C<sub>2</sub>H<sub>2</sub> (H–C≡C–H) ở trạng thái lai hóa nào?",opts:["sp²","sp³","sp","Không lai hóa"],a:2,ex:"Mỗi C có 2 miền electron (1 liên kết với H + 1 liên kết ba tính 1 miền) → AX<sub>2</sub> → lai hóa sp, phân tử dạng đường thẳng."},
+ {q:"Công thức Lewis của CS<sub>2</sub> có đặc điểm gì?",opts:["S–C–S chỉ có liên kết đơn, C có cặp riêng","S=C=S, giống hệt CO<sub>2</sub>; C không có cặp riêng","C có 2 cặp riêng, dạng góc","S–C=S, dạng tháp tam giác"],a:1,ex:"CS<sub>2</sub> là S=C=S, giống CO<sub>2</sub> → AX<sub>2</sub>, dạng đường thẳng, góc 180°."},
+ {q:"Phân tử SF<sub>4</sub> (AX<sub>4</sub>E) có dạng hình học nào?",opts:["Chữ T","Tháp tam giác","Vuông phẳng","Bập bênh (Seesaw)"],a:3,ex:"Cặp riêng chiếm vị trí xích đạo → 4 nguyên tử F tạo dạng bập bênh."}
+];
+(function buildQuiz(){
+  var box=document.getElementById("quiz");
+  QUIZ.forEach(function(item,i){
+    var div=document.createElement("div");div.className="q";
+    div.innerHTML="<p>Câu "+(i+1)+". "+item.q+"</p>"+item.opts.map(function(o,j){
+      return '<label><input type="radio" name="q'+i+'" value="'+j+'"> '+o+"</label>";
+    }).join("")+'<div class="mark" id="mark'+i+'"></div>';
+    box.appendChild(div);
+  });
+})();
+document.getElementById("quizCheck").addEventListener("click",function(){
+  var score=0;
+  QUIZ.forEach(function(item,i){
+    var sel=document.querySelector('input[name="q'+i+'"]:checked');
+    var mark=document.getElementById("mark"+i);
+    if(sel&&+sel.value===item.a){score++;mark.className="mark ok";mark.innerHTML="✓ Đúng. "+item.ex;}
+    else{mark.className="mark no";mark.innerHTML="✗ Chưa đúng. "+item.ex;}
+  });
+  var sb=document.getElementById("quizScore");sb.style.display="block";
+  sb.textContent="Điểm của em: "+score+" / "+QUIZ.length+(score===QUIZ.length?" — Xuất sắc! 🎉":(score>=6?" — Khá tốt, xem lại câu sai nhé!":" — Hãy quay lại phần mô phỏng và bảng tra rồi thử lại nhé!"));
+  scrollToEl(sb);
+});
+document.getElementById("quizReset").addEventListener("click",function(){
+  document.querySelectorAll('#quiz input[type="radio"]').forEach(function(r){r.checked=false;});
+  document.querySelectorAll(".q .mark").forEach(function(mk){mk.className="mark";mk.textContent="";});
+  document.getElementById("quizScore").style.display="none";
+});
+</script>
+</body>
+</html>
